@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: cuisine-postgres
+    environment:
+      POSTGRES_DB: myPetitWok
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    container_name: cuisine-api
+    environment:
+      SERVER_PORT: 5000
+      DB_URL: jdbc:postgresql://postgres:5432/myPetitWok
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      JWT_SECRET: local-dev-secret-key-must-be-at-least-32-characters-long
+      AWS_REGION: eu-west-1
+      S3_BUCKET: local-dev-bucket
+      S3_BASE_URL: http://localhost:9000/local-dev-bucket
+      SPRING_PROFILES_ACTIVE: local
+    ports:
+      - "8080:5000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
