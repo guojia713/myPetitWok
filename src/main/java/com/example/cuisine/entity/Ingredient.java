@@ -39,6 +39,7 @@ public class Ingredient {
     private Ingredient substitute;
 
     @OneToMany(mappedBy = "ingredient", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("id ASC")
     private List<IngredientTranslation> translations = new ArrayList<>();
 
     // Helper: get translation for a specific language, fallback to EN

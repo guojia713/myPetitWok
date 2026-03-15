@@ -3,19 +3,20 @@ package com.example.cuisine.config;
 import com.example.cuisine.repository.UserRepository;
 import com.example.cuisine.util.SecurityUtils;
 import jakarta.annotation.PostConstruct;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 
 @Configuration
-@RequiredArgsConstructor
 public class AppConfig {
 
-    private final UserRepository userRepository;
+    @Autowired @Lazy
+    private UserRepository userRepository;
 
     @Value("${aws.region:eu-west-1}")
     private String awsRegion;

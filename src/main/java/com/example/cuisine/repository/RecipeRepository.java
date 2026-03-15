@@ -51,13 +51,11 @@ public interface RecipeRepository extends JpaRepository<Recipe, Long> {
             @Param("maxSpice") Integer maxSpice,
             Pageable pageable);
 
-    // Fetch recipe with all translations eagerly (avoids N+1)
+    // Fetch recipe with ingredients eagerly (translations loaded lazily)
     @Query("""
         SELECT DISTINCT r FROM Recipe r
-        LEFT JOIN FETCH r.translations
         LEFT JOIN FETCH r.recipeIngredients ri
-        LEFT JOIN FETCH ri.ingredient i
-        LEFT JOIN FETCH i.translations
+        LEFT JOIN FETCH ri.ingredient
         WHERE r.id = :id AND r.published = true
         """)
     Optional<Recipe> findByIdWithDetails(@Param("id") Long id);
@@ -65,10 +63,8 @@ public interface RecipeRepository extends JpaRepository<Recipe, Long> {
     // Admin: fetch any recipe by id (published or not)
     @Query("""
         SELECT DISTINCT r FROM Recipe r
-        LEFT JOIN FETCH r.translations
         LEFT JOIN FETCH r.recipeIngredients ri
-        LEFT JOIN FETCH ri.ingredient i
-        LEFT JOIN FETCH i.translations
+        LEFT JOIN FETCH ri.ingredient
         WHERE r.id = :id
         """)
     Optional<Recipe> findByIdWithDetailsAdmin(@Param("id") Long id);
