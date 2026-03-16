@@ -24,7 +24,7 @@ services:
     container_name: cuisine-api
     environment:
       SERVER_PORT: 5000
-      DB_URL: jdbc:postgresql://postgres:5432/myPetitWok
+      DB_URL: jdbc:postgresql://postgres:5432/myPetitWok?sslmode=disable
       DB_USERNAME: postgres
       DB_PASSWORD: postgres
       JWT_SECRET: local-dev-secret-key-must-be-at-least-32-characters-long
