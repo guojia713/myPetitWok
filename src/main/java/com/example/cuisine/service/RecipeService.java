@@ -255,6 +255,7 @@ public class RecipeService {
         dto.setOptional(ri.getOptional());
         dto.setImageUrl(ing.getImageUrl());
         dto.setWhereToFind(t != null ? t.getWhereToFind() : null);
+        dto.setJoybuyUrl(ing.getJoybuyUrl());
 
         if (ing.getSubstitute() != null) {
             IngredientTranslation st = ing.getSubstitute().getTranslation(lang);

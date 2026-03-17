@@ -31,6 +31,9 @@ public class Ingredient {
     // Category: SAUCE, SPICE, VEGETABLE, PROTEIN, NOODLE, etc.
     private String category;
 
+    // Joybuy affiliate link — where to buy this ingredient online
+    private String joybuyUrl;
+
     // Self-referencing: if this ingredient is hard to find,
     // point to a simpler substitute
     // e.g. Shaoxing wine → Dry Sherry

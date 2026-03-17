@@ -19,6 +19,7 @@ public class IngredientDto {
         public Boolean optional;
         public String imageUrl;
         public String whereToFind; // in requested language
+        public String joybuyUrl;
         public SubstituteResponse substitute;
     }
 
@@ -39,6 +40,7 @@ public class IngredientDto {
         public String whereToFind;
         public String imageUrl;
         public String category;
+        public String joybuyUrl;
         public SubstituteResponse substitute;
     }
 
@@ -48,6 +50,7 @@ public class IngredientDto {
         @NotBlank public String asianName;
         public String category;
         public Long substituteId;
+        public String joybuyUrl;
         // key = "EN", "FR", "ZH_CN"
         @NotNull public Map<String, TranslationInput> translations;
     }
