@@ -5,6 +5,7 @@ import com.example.cuisine.entity.Language;
 import com.example.cuisine.service.RecipeService;
 import com.example.cuisine.service.S3UploadService;
 import com.example.cuisine.util.SecurityUtils;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -35,6 +36,7 @@ public class RecipeController {
      *   size        = page size (default 12)
      */
     @GetMapping
+    @SecurityRequirements
     public ResponseEntity<RecipeDto.PagedResponse> getAll(
             @RequestParam(defaultValue = "EN") String lang,
             @RequestParam(required = false) String cuisineType,
@@ -57,6 +59,7 @@ public class RecipeController {
      * Public — get full recipe detail with ingredients and steps.
      */
     @GetMapping("/{id}")
+    @SecurityRequirements
     public ResponseEntity<RecipeDto.DetailResponse> getById(
             @PathVariable Long id,
             @RequestParam(defaultValue = "EN") String lang) {

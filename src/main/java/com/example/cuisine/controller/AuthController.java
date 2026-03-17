@@ -2,6 +2,7 @@ package com.example.cuisine.controller;
 
 import com.example.cuisine.dto.AuthDto;
 import com.example.cuisine.service.AuthService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -16,6 +17,7 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/register")
+    @SecurityRequirements
     public ResponseEntity<AuthDto.AuthResponse> register(
             @Valid @RequestBody AuthDto.RegisterRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -23,6 +25,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
+    @SecurityRequirements
     public ResponseEntity<AuthDto.AuthResponse> login(
             @Valid @RequestBody AuthDto.LoginRequest request) {
         return ResponseEntity.ok(authService.login(request));

@@ -2,10 +2,12 @@ package com.example.cuisine.service;
 
 import com.example.cuisine.exception.ApiException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
@@ -24,6 +26,7 @@ import java.util.UUID;
  *   recipes/{recipeId}/step-{n}.jpg   ← step-by-step photos
  *   ingredients/{ingredientId}.jpg    ← ingredient photo
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class S3UploadService {
@@ -94,7 +97,11 @@ public class S3UploadService {
             return baseUrl + "/" + key;
 
         } catch (IOException e) {
-            throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to upload image");
+            log.error("S3 upload IO error for key {}: {}", key, e.getMessage(), e);
+            throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to read uploaded file");
+        } catch (SdkException e) {
+            log.error("S3 upload SDK error for key {}: {}", key, e.getMessage(), e);
+            throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to upload image to storage");
         }
     }
 
