@@ -1,13 +1,15 @@
-# 🍜 Asian Cuisine API
+# 🍜 myPetitWok — Backend API
 
 A production-ready Spring Boot REST API for an Asian cooking app targeting European audiences.
 
 **Features:**
 - 🌍 Multilingual content (English, French, Simplified Chinese)
 - 🔐 JWT authentication with soft login wall
-- 👨‍🍳 Admin recipe upload with S3 image support
+- 👨‍🍳 Admin recipe + ingredient management with S3 image support
 - 🔍 Full-text recipe search with cuisine/difficulty/spice filters
 - ❤️ User favourites system
+- 👤 User profile (display name, preferred language)
+- 🛒 Joybuy affiliate links on ingredients
 - 🗄️ Flyway database migrations
 - ☁️ AWS-ready (Elastic Beanstalk + RDS + S3)
 
@@ -22,8 +24,10 @@ docker compose up -d
 # Test it
 curl http://localhost:8080/health
 curl "http://localhost:8080/api/v1/recipes?lang=FR"
-curl "http://localhost:8080/api/v1/recipes?lang=ZH_CN"
+curl "http://localhost:8080/api/v1/ingredients?lang=EN"
 ```
+
+Swagger UI: http://localhost:8080/swagger-ui/index.html
 
 ---
 
@@ -52,6 +56,25 @@ page        = 0-based page (default: 0)
 size        = items per page (default: 12)
 ```
 
+### Ingredients (Public)
+| Method | URL | Auth | Description |
+|--------|-----|------|-------------|
+| GET | `/api/v1/ingredients` | None | List all ingredients |
+| GET | `/api/v1/ingredients/{id}` | None | Ingredient detail |
+
+**Query parameters for GET /api/v1/ingredients:**
+```
+lang     = EN | FR | ZH_CN  (default: EN)
+category = SAUCE | SPICE | VEGETABLE | PROTEIN | OIL | OTHER
+search   = name search in requested language
+```
+
+### User Profile (Requires login)
+| Method | URL | Auth | Description |
+|--------|-----|------|-------------|
+| GET | `/api/v1/me` | JWT | Get my profile |
+| PUT | `/api/v1/me` | JWT | Update display name / preferred language |
+
 ### Favourites (Requires login)
 | Method | URL | Auth | Description |
 |--------|-----|------|-------------|
@@ -59,20 +82,29 @@ size        = items per page (default: 12)
 | POST | `/api/v1/favourites/{recipeId}` | JWT | Save a recipe |
 | DELETE | `/api/v1/favourites/{recipeId}` | JWT | Unsave a recipe |
 
-### Admin (Requires ROLE_ADMIN)
+### Admin — Recipes (Requires ROLE_ADMIN)
 | Method | URL | Auth | Description |
 |--------|-----|------|-------------|
 | POST | `/api/v1/recipes` | Admin JWT | Create recipe (draft) |
 | PUT | `/api/v1/recipes/{id}` | Admin JWT | Update recipe |
 | PUT | `/api/v1/recipes/{id}/publish?published=true` | Admin JWT | Publish/unpublish |
 | POST | `/api/v1/recipes/{id}/image` | Admin JWT | Upload main photo |
+| POST | `/api/v1/recipes/{id}/steps/{stepOrder}/image` | Admin JWT | Upload step photo |
 | DELETE | `/api/v1/recipes/{id}` | Admin JWT | Delete recipe |
+
+### Admin — Ingredients (Requires ROLE_ADMIN)
+| Method | URL | Auth | Description |
+|--------|-----|------|-------------|
+| POST | `/api/v1/ingredients` | Admin JWT | Create ingredient |
+| PUT | `/api/v1/ingredients/{id}` | Admin JWT | Update ingredient |
+| DELETE | `/api/v1/ingredients/{id}` | Admin JWT | Delete ingredient |
+| POST | `/api/v1/ingredients/{id}/image` | Admin JWT | Upload ingredient photo |
 
 ---
 
 ## 🔐 Making Yourself Admin
 
-After registering your account, run this SQL on your RDS database:
+After registering your account, run this SQL on your database:
 
 ```sql
 UPDATE users SET role = 'ROLE_ADMIN' WHERE email = 'your@email.com';
@@ -112,9 +144,9 @@ curl -X POST http://localhost:8080/api/v1/recipes \
       {
         "stepOrder": 1,
         "translations": {
-          "EN": { "instruction": "Heat water to just below boiling.", "tip": "Never boil miso — it destroys the probiotics." },
-          "FR": { "instruction": "Chauffez l'\''eau juste en dessous du point d'\''ébullition.", "tip": "Ne faites jamais bouillir le miso — cela détruit les probiotiques." },
-          "ZH_CN": { "instruction": "将水加热至接近沸腾但不沸腾的状态。", "tip": "味噌绝对不能煮沸，否则会破坏其中的益生菌。" }
+          "EN": { "instruction": "Heat water to just below boiling.", "tip": "Never boil miso." },
+          "FR": { "instruction": "Chauffez l'\''eau juste en dessous du point d'\''ébullition.", "tip": "Ne faites jamais bouillir le miso." },
+          "ZH_CN": { "instruction": "将水加热至接近沸腾但不沸腾的状态。", "tip": "味噌绝对不能煮沸。" }
         }
       }
     ]
@@ -127,7 +159,7 @@ curl -X PUT "http://localhost:8080/api/v1/recipes/4/publish?published=true" \
 # 4. Upload photo
 curl -X POST http://localhost:8080/api/v1/recipes/4/image \
   -H "Authorization: Bearer $TOKEN" \
-  -F "file=@/path/to/miso-soup.jpg"
+  -F "file=@/path/to/photo.jpg"
 ```
 
 ---
@@ -136,48 +168,51 @@ curl -X POST http://localhost:8080/api/v1/recipes/4/image \
 
 ```
 src/main/java/com/example/cuisine/
-├── AsianCuisineApplication.java
 ├── config/
 │   ├── SecurityConfig.java        ← JWT + CORS + endpoint rules
-│   └── AppConfig.java             ← S3 client, SecurityUtils wiring
+│   ├── AppConfig.java             ← S3 client, SecurityUtils wiring
+│   └── OpenApiConfig.java         ← Swagger / OpenAPI setup
 ├── controller/
 │   ├── AuthController.java        ← /api/v1/auth/*
 │   ├── RecipeController.java      ← /api/v1/recipes/*
+│   ├── IngredientController.java  ← /api/v1/ingredients/*
+│   ├── UserController.java        ← /api/v1/me
 │   ├── FavouriteController.java   ← /api/v1/favourites/*
 │   └── HealthController.java      ← /health
 ├── dto/
 │   ├── AuthDto.java
 │   ├── RecipeDto.java
-│   └── IngredientDto.java
+│   ├── IngredientDto.java
+│   └── UserDto.java
 ├── entity/
 │   ├── Language.java              ← EN, FR, ZH_CN enum
-│   ├── Recipe.java                ← Core recipe (no text)
-│   ├── RecipeTranslation.java     ← Name + description per language
-│   ├── Ingredient.java            ← With substitute linking
-│   ├── IngredientTranslation.java ← Name + where to find per language
-│   ├── RecipeStep.java            ← Step with optional photo
-│   ├── RecipeStepTranslation.java ← Instruction + tip per language
-│   ├── RecipeIngredient.java      ← Quantity join table
-│   ├── User.java                  ← With ROLE_USER / ROLE_ADMIN
-│   └── Favourite.java             ← User saved recipes
-├── exception/
-│   ├── ApiException.java
-│   └── GlobalExceptionHandler.java
+│   ├── Recipe.java
+│   ├── RecipeTranslation.java
+│   ├── Ingredient.java            ← With substitute + joybuyUrl
+│   ├── IngredientTranslation.java
+│   ├── RecipeStep.java
+│   ├── RecipeStepTranslation.java
+│   ├── RecipeIngredient.java
+│   ├── User.java
+│   └── Favourite.java
 ├── repository/
-│   ├── RecipeRepository.java      ← Search + filter queries
+│   ├── RecipeRepository.java
+│   ├── RecipeStepRepository.java
 │   ├── IngredientRepository.java
 │   ├── UserRepository.java
 │   └── FavouriteRepository.java
 ├── security/
-│   ├── JwtService.java            ← Generate + validate tokens
-│   └── JwtAuthFilter.java         ← Intercept every request
+│   ├── JwtService.java
+│   └── JwtAuthFilter.java
 ├── service/
 │   ├── AuthService.java
-│   ├── RecipeService.java         ← Language-aware DTO mapping
+│   ├── RecipeService.java
+│   ├── IngredientService.java
+│   ├── UserService.java
 │   ├── FavouriteService.java
 │   └── S3UploadService.java
 └── util/
-    └── SecurityUtils.java         ← Get current user from context
+    └── SecurityUtils.java
 
 src/main/resources/
 ├── application.properties         ← Production (AWS)
@@ -185,8 +220,10 @@ src/main/resources/
 ├── application-test.properties    ← Tests (H2)
 └── db/migration/
     ├── V1__initial_schema.sql     ← All tables + indexes
-    ├── V2__seed_ingredients.sql   ← 20 ingredients EN/FR/ZH-CN
-    └── V3__seed_recipes.sql       ← 3 starter recipes EN/FR/ZH-CN
+    ├── V2__seed_ingredients.sql   ← 20 core ingredients EN/FR/ZH_CN
+    ├── V3__seed_recipes.sql       ← 3 starter recipes EN/FR/ZH_CN
+    ├── V4__add_joybuy_url_to_ingredients.sql
+    └── V5__seed_expansion.sql     ← 15 ingredients + 12 recipes (all 5 cuisines)
 ```
 
 ---
@@ -206,9 +243,51 @@ S3_BUCKET     = your-bucket-name
 S3_BASE_URL   = https://your-bucket.s3.eu-west-1.amazonaws.com
 ```
 
+---
+
 ## 🧪 Run Tests
 
 ```bash
 ./mvnw test
 # Uses H2 in-memory DB — no PostgreSQL or AWS needed
 ```
+
+---
+
+## 📦 Seed Data
+
+| Migration | Content |
+|-----------|---------|
+| V2 | 20 core ingredients + 5 substitutes (EN/FR/ZH_CN) |
+| V3 | 3 recipes: Mapo Tofu, Kung Pao Chicken, Vietnamese Beef Pho |
+| V5 | 15 new ingredients + 12 new recipes across all 5 cuisines |
+
+**Total: 35 ingredients, 15 published recipes**
+
+Cuisines covered: 🇨🇳 Chinese · 🇯🇵 Japanese · 🇰🇷 Korean · 🇹🇭 Thai · 🇻🇳 Vietnamese
+
+---
+
+## 🗺️ Roadmap
+
+### ✅ Sprint 1 — Backend MVP
+- JWT auth, recipe CRUD, multilingual content, ingredients with substitutes
+- Recipe steps with tips, favourites, S3 image upload
+- Flyway migrations, Docker setup, 3 seed recipes
+
+### ✅ Sprint 2 — Backend Completion
+- Ingredient endpoints (public list + detail, admin CRUD + image upload)
+- Recipe step image upload (`POST /recipes/{id}/steps/{stepOrder}/image`)
+- User profile endpoints (`GET/PUT /api/v1/me`)
+- Joybuy affiliate link on ingredients
+- Seed data expanded to 15 recipes across all 5 cuisines
+
+### 📱 Sprint 3 — Expo Mobile App (next)
+- React Native + Expo + Expo Router + NativeWind + TanStack Query
+- Recipe list (card grid, filters, search), recipe detail screen
+- Language switcher EN/FR/ZH_CN
+
+### 🔐 Sprint 4 — Auth + Favourites (mobile)
+### 👨‍🍳 Sprint 5 — Admin screens (mobile)
+### ⭐ Sprint 6 — Growth features
+### 🚀 Sprint 7 — Production launch
