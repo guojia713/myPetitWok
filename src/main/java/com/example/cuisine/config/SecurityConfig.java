@@ -55,6 +55,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.DELETE, "/api/v1/recipes/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.POST,   "/api/v1/ingredients/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.PUT,    "/api/v1/ingredients/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/v1/ingredients/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.POST,   "/api/v1/upload/**").hasRole("ADMIN")
                 //Swagger UI — allow public acces
                  .requestMatchers(

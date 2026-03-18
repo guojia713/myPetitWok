@@ -7,6 +7,7 @@ import com.example.cuisine.exception.ApiException;
 import com.example.cuisine.repository.FavouriteRepository;
 import com.example.cuisine.repository.IngredientRepository;
 import com.example.cuisine.repository.RecipeRepository;
+import com.example.cuisine.repository.RecipeStepRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -28,6 +29,7 @@ public class RecipeService {
     private final RecipeRepository recipeRepository;
     private final IngredientRepository ingredientRepository;
     private final FavouriteRepository favouriteRepository;
+    private final RecipeStepRepository recipeStepRepository;
 
     // ── Public: list with filters ─────────────────────────────────────────────
 
@@ -112,6 +114,17 @@ public class RecipeService {
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Recipe not found"));
         recipe.setImageUrl(imageUrl);
         recipeRepository.save(recipe);
+    }
+
+    // ── Admin: update step image URL after S3 upload ─────────────────────────
+
+    @Transactional
+    public void updateStepImageUrl(Long recipeId, int stepOrder, String imageUrl) {
+        RecipeStep step = recipeStepRepository.findByRecipeIdAndStepOrder(recipeId, stepOrder)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND,
+                        "Step " + stepOrder + " not found for recipe " + recipeId));
+        step.setImageUrl(imageUrl);
+        recipeStepRepository.save(step);
     }
 
     // ── Admin: delete ─────────────────────────────────────────────────────────

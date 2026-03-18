@@ -121,6 +121,21 @@ public class RecipeController {
     }
 
     /**
+     * POST /api/v1/recipes/{id}/steps/{stepOrder}/image
+     * Admin only — upload photo for a specific step to S3.
+     */
+    @PostMapping("/{id}/steps/{stepOrder}/image")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<String> uploadStepImage(
+            @PathVariable Long id,
+            @PathVariable int stepOrder,
+            @RequestParam("file") MultipartFile file) {
+        String url = s3UploadService.uploadStepImage(id, stepOrder, file);
+        recipeService.updateStepImageUrl(id, stepOrder, url);
+        return ResponseEntity.ok(url);
+    }
+
+    /**
      * DELETE /api/v1/recipes/{id}
      * Admin only — permanently delete a recipe.
      */
